@@ -1,0 +1,8 @@
+[server]
+# Só abre neste computador. Para abrir de outro aparelho da casa, troque por "0.0.0.0".
+address = "localhost"
+port = 8501
+headless = true
+
+[browser]
+gatherUsageStats = false

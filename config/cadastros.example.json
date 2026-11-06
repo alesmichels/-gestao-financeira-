@@ -1,0 +1,34 @@
+{
+  "_leia": "Copie para config/cadastros.json e ajuste. Rode 'python -m app.cadastros' para aplicar no banco. 'apelidos' são as palavras que o bot reconhece nas mensagens (sem acento, minúsculas).",
+  "unidade": "Casa",
+  "pessoas": [
+    {"nome": "Alexandre", "telegram_id": 0, "peso_divisao": 0.58},
+    {"nome": "Parceira", "telegram_id": 0, "peso_divisao": 0.42}
+  ],
+  "contas": [
+    {"nome": "Pix", "tipo": "pix", "titular": null, "apelidos": ["pix"]},
+    {"nome": "Débito", "tipo": "debito", "titular": null, "apelidos": ["debito", "no debito"]},
+    {"nome": "Vale", "tipo": "vale", "titular": null, "apelidos": ["vale", "va", "vr", "vale alimentacao", "vale refeicao"]},
+    {"nome": "Dinheiro", "tipo": "dinheiro", "titular": null, "apelidos": ["dinheiro", "especie"]},
+    {"nome": "Crédito PicPay", "tipo": "credito", "titular": "Alexandre", "dia_fechamento": 12, "dia_vencimento": 19, "apelidos": ["credito picpay", "cartao picpay", "picpay"]},
+    {"nome": "Crédito Sicoob", "tipo": "credito", "titular": "Alexandre", "dia_fechamento": 20, "dia_vencimento": 27, "apelidos": ["credito sicoob", "cartao sicoob", "sicoob"]},
+    {"nome": "Crédito Parceira", "tipo": "credito", "titular": "Parceira", "dia_fechamento": 8, "dia_vencimento": 15, "apelidos": ["cartao dela", "credito dela", "cartao parceira"]},
+    {"nome": "Crédito Conjunto", "tipo": "credito", "titular": null, "dia_fechamento": 15, "dia_vencimento": 22, "apelidos": ["credito conjunto", "cartao conjunto", "conjunto"]}
+  ],
+  "categorias": [
+    {"nome": "Mercado", "regra_divisao": "proporcional", "apelidos": ["mercado", "supermercado", "padaria", "feira", "acougue", "hortifruti"]},
+    {"nome": "Moradia", "regra_divisao": "proporcional", "apelidos": ["aluguel", "condominio", "iptu", "moradia"]},
+    {"nome": "Contas da casa", "regra_divisao": "proporcional", "apelidos": ["luz", "energia", "agua", "internet", "gas", "celular", "telefone"]},
+    {"nome": "Carro", "regra_divisao": "50/50", "apelidos": ["carro", "combustivel", "gasolina", "etanol", "posto", "oficina", "seguro do carro", "ipva", "pedagio"]},
+    {"nome": "Transporte", "regra_divisao": "proporcional", "apelidos": ["uber", "onibus", "passagem", "taxi"]},
+    {"nome": "Alimentação fora", "regra_divisao": "proporcional", "apelidos": ["almoco", "jantar", "lanche", "restaurante", "ifood", "pizza"]},
+    {"nome": "Saúde", "regra_divisao": "proporcional", "apelidos": ["farmacia", "remedio", "medico", "consulta", "exame", "dentista"]},
+    {"nome": "Lazer", "regra_divisao": "proporcional", "apelidos": ["cinema", "show", "viagem", "passeio", "bar"]},
+    {"nome": "Pessoal", "regra_divisao": "individual", "apelidos": ["roupa", "cabelo", "academia", "pessoal"]},
+    {"nome": "Outros", "regra_divisao": "proporcional", "apelidos": []},
+    {"nome": "Salário", "regra_divisao": "individual", "tipo": "entrada", "apelidos": ["salario"]},
+    {"nome": "Vale recebido", "regra_divisao": "individual", "tipo": "entrada", "apelidos": ["vale caiu", "recebi vale", "credito do vale"]},
+    {"nome": "Venda do vale", "regra_divisao": "individual", "tipo": "entrada", "apelidos": ["venda do vale", "vendi vale"]},
+    {"nome": "Outras entradas", "regra_divisao": "individual", "tipo": "entrada", "apelidos": []}
+  ]
+}
