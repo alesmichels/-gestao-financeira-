@@ -1,27 +1,36 @@
-"""Aplica config/cadastros.json no banco.
+"""Cadastros iniciais (pessoas, contas, categorias).
 
-Uso:  python -m app.cadastros
-Se config/cadastros.json não existir, é criado a partir do exemplo.
+O aplicativo aplica os cadastros sozinho na primeira vez que abre. Depois disso,
+tudo se ajusta pela página Configurações do aplicativo.
+
+Uso opcional, para reaplicar o arquivo JSON:  python -m app.cadastros
+Se config/cadastros.json existir, ele é usado; senão, config/cadastros.example.json.
 """
 import json
-import shutil
 
 from app import config, db
 
 
+def arquivo_de_cadastros():
+    return config.CADASTROS if config.CADASTROS.exists() else config.CADASTROS_EXEMPLO
+
+
+def garantir_cadastros(con) -> int:
+    """Na primeira execução (banco vazio), aplica os cadastros iniciais. Devolve o id da unidade."""
+    row = con.execute("SELECT id FROM unidades ORDER BY id LIMIT 1").fetchone()
+    if row:
+        return row["id"]
+    dados = json.loads(arquivo_de_cadastros().read_text(encoding="utf-8"))
+    return db.aplicar_cadastros(con, dados)
+
+
 def main():
-    if not config.CADASTROS.exists():
-        shutil.copy(config.CADASTROS_EXEMPLO, config.CADASTROS)
-        print(f"Criei {config.CADASTROS.relative_to(config.RAIZ)} a partir do exemplo. "
-              "Ajuste nomes, IDs do Telegram e cartões, e rode este comando de novo.")
-    dados = json.loads(config.CADASTROS.read_text(encoding="utf-8"))
+    origem = arquivo_de_cadastros()
+    dados = json.loads(origem.read_text(encoding="utf-8"))
     con = db.conectar()
     uid = db.aplicar_cadastros(con, dados)
-    sem_id = [p["nome"] for p in dados["pessoas"] if not p.get("telegram_id")]
-    print(f"Cadastros aplicados na unidade '{dados['unidade']}' (id {uid}). Banco: {config.DB_PATH}")
-    if sem_id:
-        print("Atenção: sem ID do Telegram (o bot vai ignorar essas pessoas): " + ", ".join(sem_id))
-        print("Mande /id para o bot no Telegram para descobrir o seu.")
+    print(f"Cadastros de {origem.name} aplicados na unidade '{dados['unidade']}' (id {uid}).")
+    print(f"Banco: {config.DB_PATH}")
 
 
 if __name__ == "__main__":

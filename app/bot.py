@@ -1,8 +1,14 @@
-"""Bot do Telegram (long polling: não precisa de endereço público nem porta aberta).
+"""Bot do Telegram (opcional; long polling: não precisa de endereço público nem porta aberta).
 
-Uso:  python -m app.bot
+Uso:  pip install -r requirements-bot.txt   e depois   python -m app.bot
+Passo a passo em docs/bot-telegram.md.
 """
 import logging
+
+try:
+    import telegram  # noqa: F401
+except ImportError:
+    raise SystemExit("O bot é opcional e não está instalado. Rode: pip install -r requirements-bot.txt")
 
 from telegram import (InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton,
                       ReplyKeyboardMarkup, Update)

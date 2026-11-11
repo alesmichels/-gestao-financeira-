@@ -25,6 +25,7 @@ def main():
     for arq in antigos:
         arq.unlink()
     print(f"Backup criado: {destino}")
+    return destino
 
 
 if __name__ == "__main__":

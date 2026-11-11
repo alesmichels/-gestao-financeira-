@@ -1,84 +1,63 @@
 # Gestão Financeira
 
-Assistente financeiro do casal: os gastos são lançados por mensagem num bot do Telegram, ficam num banco de dados no computador de casa e aparecem num painel no navegador.
+Aplicativo de controle financeiro do casal que roda **no seu computador**, aberto pelo navegador. Sem mensalidade e sem internet obrigatória. Os dados ficam num único arquivo (`dados\financas.db`), que nunca vai para o GitHub.
 
-- Roda **localmente**, sem mensalidade: o bot busca as mensagens no Telegram, sem precisar abrir porta no roteador.
-- Os dados ficam num único arquivo (`dados/financas.db`), que nunca vai para o GitHub.
-- Fase atual: **Fase 1** — lançamento por texto, confirmação, resumos no bot e painel simples. Veja `docs/fases/`.
+- **Fase atual:** Fase 1, só o aplicativo local. O bot do Telegram já existe no código, mas está desligado (veja `docs/bot-telegram.md`).
+- Os dados **não somem ao fechar o navegador**: cada lançamento é gravado no arquivo na hora em que você clica em Salvar.
 
-## O que já funciona
+## O que o aplicativo faz
 
-| No bot do Telegram | No painel (computador) |
+| Página | O que tem |
 | --- | --- |
-| Lançar gasto em texto livre: `mercado 87,50 crédito picpay` | Receitas, gastos e saldo do mês |
-| Confirmar, corrigir (categoria, forma, data, divisão) ou cancelar | Gastos por categoria e forma de pagamento |
-| Pergunta a forma de pagamento quando falta | Acerto do casal |
-| Botões fixos: **Resumos**, **Lançar**, **Desfazer último** | Faturas abertas dos cartões |
-| Resumos: hoje, semana, mês, faturas, acerto do casal | Lista de lançamentos, confirmar pendentes, lançar e cancelar |
+| **Visão geral** | Receitas, gastos e saldo do mês · gastos por categoria · formas de pagamento · acerto do casal · faturas abertas |
+| **Lançamentos** | Lançamento rápido por frase (`mercado 87,50 crédito picpay`) com conferência antes de salvar · formulário completo · lista do mês, com edição e cancelamento |
+| **Configurações** | Pessoas e peso na divisão · cartões com dias de fechamento e vencimento · categorias · palavras reconhecidas · backup |
 
-## Instalação (Windows)
+## Instalação no Windows
 
-Pré-requisito: [Python 3.11 ou mais novo](https://www.python.org/downloads/) — na instalação, marque **"Add Python to PATH"**.
+### 1. Pré-requisito: Python
 
-### 1. Baixar o código
+No Prompt de Comando (tecla Windows → `cmd` → Enter), confira:
 
 ```bat
-git clone https://github.com/SEU-USUARIO/gestao-financeira.git
-cd gestao-financeira
+python --version
 ```
 
-### 2. Instalar as dependências (uma vez)
+Se não aparecer `Python 3.11` ou mais novo, instale e **feche e abra o Prompt de novo**:
 
 ```bat
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+winget install --id Python.Python.3.12 -e
 ```
 
-### 3. Criar o bot no Telegram (uma vez)
+### 2. Baixar o aplicativo para `C:\Projetos\gestao-financeira`
 
-1. No Telegram, abra uma conversa com **@BotFather** e mande `/newbot`.
-2. Escolha um nome (ex.: *Finanças da Casa*) e um usuário terminado em `bot` (ex.: `financas_casa_alexandre_bot`).
-3. O BotFather responde com um **token** (algo como `123456:ABC-...`). Guarde: ele é a senha do bot.
-4. Ainda no BotFather: `/setprivacy` → escolha o bot → **Disable** (para o bot ler as mensagens do grupo).
-5. `/setjoingroups` → escolha o bot → **Disable** depois de adicioná-lo ao grupo do casal (impede que outros o coloquem em grupos).
-
-### 4. Configurar
+**Com Git** (recomendado: facilita receber atualizações):
 
 ```bat
-copy .env.example .env
-notepad .env
+mkdir C:\Projetos
+cd /d C:\Projetos
+git clone https://github.com/alesmichels/-gestao-financeira-.git gestao-financeira
 ```
 
-Cole o token em `TELEGRAM_TOKEN=`. Salve.
+**Sem Git:** no GitHub, clique em **Code → Download ZIP**, extraia para `C:\Projetos` e renomeie a pasta extraída para `gestao-financeira`.
 
-```bat
-python -m app.cadastros
-```
+### 3. Instalar e abrir
 
-Isso cria `config/cadastros.json`. Abra e ajuste: nome da parceira, peso de cada um na divisão (ex.: 0.58 e 0.42), cartões com dia de fechamento e vencimento, e os apelidos que vocês usam.
+Na pasta `C:\Projetos\gestao-financeira`, dê dois cliques em **`abrir-aplicativo.bat`**.
 
-### 5. Descobrir os IDs do Telegram
+- Na primeira vez, ele instala tudo sozinho (de 1 a 3 minutos).
+- Depois, o navegador abre em http://localhost:8501.
+- **Deixe a janela preta aberta** enquanto usa. Fechar a janela desliga o aplicativo, e os dados continuam salvos.
 
-```bat
-python -m app.bot
-```
+### 4. Primeiro uso
 
-Com o bot rodando, cada um manda `/id` para o bot no Telegram. Coloque os números em `telegram_id` no `config/cadastros.json`. Depois:
+1. Em **Configurações**, ajuste o nome da parceira, os pesos da divisão e os dias de fechamento e vencimento dos cartões. Clique em **Salvar** de cada tabela.
+2. Em **Lançamentos**, escreva `mercado 10 pix`, aperte Enter, confira e clique em **Salvar lançamento**.
+3. Volte em **Visão geral**: o gasto aparece no mês.
 
-1. Crie um grupo com vocês dois e adicione o bot.
-2. Mande `/id` **no grupo**: o "ID deste chat" (número negativo) vai em `GRUPO_AUTORIZADO=` no `.env`.
-3. Pare o bot (Ctrl+C), rode `python -m app.cadastros` de novo e inicie o bot outra vez.
+Dica: crie um atalho do `abrir-aplicativo.bat` na Área de Trabalho (botão direito → Enviar para → Área de trabalho).
 
-Pronto: mandem `/start` no grupo para aparecerem os botões.
-
-## Uso diário
-
-- **Bot:** dois cliques em `iniciar-bot.bat` (precisa ficar aberto).
-- **Painel:** dois cliques em `iniciar-painel.bat` e abra http://localhost:8501.
-- **Backup:** `python -m app.backup` cria uma cópia em `backups/`. Copie essa pasta para um HD externo de vez em quando.
-
-### Como escrever os lançamentos
+## Como escrever no lançamento rápido
 
 ```
 mercado 87,50 crédito picpay
@@ -90,34 +69,45 @@ recebi salário 5.200
 vale caiu 640                       → entrada no dia 1º do mês
 ```
 
-O bot entende pelos **apelidos** do `config/cadastros.json`. Se uma palavra que vocês usam não for reconhecida, acrescente-a lá e rode `python -m app.cadastros`.
+Antes de salvar, o aplicativo mostra o que entendeu, e dá para ajustar qualquer campo. Se uma palavra que vocês usam não for reconhecida, acrescente-a nos **apelidos** em Configurações.
 
-## Mudar para outro computador
+## Backup
 
-1. Pare o bot no computador antigo (**o bot só pode rodar em um lugar por vez**).
-2. No novo: passos 1 e 2 da instalação.
-3. Copie do antigo para o novo: `.env`, `config/cadastros.json` e a pasta `dados/`.
-4. Inicie o bot no novo.
+Em **Configurações → Seus dados e backup**:
 
-## Testes
+- **Fazer backup agora:** salva uma cópia em `backups\` (guarda as 30 últimas).
+- **Baixar cópia do banco:** baixa o arquivo para você guardar num pen drive ou na nuvem.
+
+Para restaurar: feche o aplicativo e coloque a cópia no lugar de `dados\financas.db`.
+
+## Receber atualizações
+
+Se instalou com Git, rode na pasta do aplicativo:
 
 ```bat
+git pull
+```
+
+Depois abra pelo `abrir-aplicativo.bat`, como sempre. Seus dados não são afetados.
+
+## Para quem for mexer no código
+
+```bat
+.venv\Scripts\activate
 python -m pytest
 ```
 
-## Estrutura
-
 ```
 app/
-  bot.py        conexão com o Telegram
-  servico.py    regras da conversa (testável sem Telegram)
-  parser.py     interpreta as mensagens (regras, sem IA)
-  resumos.py    totais, faturas, acerto do casal
-  db.py         banco de dados SQLite
-  painel.py     painel no navegador
-  cadastros.py  aplica config/cadastros.json no banco
-  backup.py     cópia de segurança
-config/         cadastros (o seu fica fora do Git)
-docs/           decisões, diário de cada fase, dicionário de dados
-tests/          testes automáticos
+  painel.py        entrada do aplicativo (menu e páginas)
+  paginas/         Visão geral, Lançamentos, Configurações
+  parser.py        entende as frases do lançamento rápido (regras, sem IA)
+  resumos.py       totais, faturas, acerto do casal
+  db.py            banco de dados SQLite
+  cadastros.py     cadastros iniciais (primeira execução)
+  backup.py        cópia de segurança
+  bot.py, servico.py   bot do Telegram (opcional)
+config/            cadastros iniciais de exemplo
+docs/              decisões, diário de cada fase, dicionário de dados
+tests/             testes automáticos
 ```

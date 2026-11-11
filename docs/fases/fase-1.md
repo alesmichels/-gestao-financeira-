@@ -1,31 +1,28 @@
-# Fase 1 — Lançamento por texto (MVP)
+# Fase 1 — Lançamentos no aplicativo local (MVP)
 
-**Início:** 05/11/2026
+**Início:** 05/11/2026 · **Ajuste de escopo:** 10/11/2026 (decisão 0005: só aplicativo local; bot desligado)
 
 ## Objetivo
-Lançar gastos pelo Telegram em segundos e ver o mês no painel, sem voltar à planilha.
+Registrar gastos em segundos no aplicativo do computador e ver o mês, sem voltar à planilha.
 
 ## Critério de pronto
-- [ ] 90% das mensagens reais viram lançamentos corretos sem correção
-- [ ] Uma semana de uso pelos dois sem voltar à planilha
+- [ ] Aplicativo instalado e abrindo pelo `abrir-aplicativo.bat`
+- [ ] Configurações ajustadas (nomes, pesos, cartões)
+- [ ] 90% das frases do lançamento rápido entendidas sem correção
+- [ ] Um mês fechado no aplicativo, sem usar a planilha
 
-## Entregue em 05/11/2026
-- Banco SQLite com unidades de gestão (Casa; Propriedade no futuro), pessoas, contas, categorias, lançamentos e histórico de alterações.
-- Interpretação de mensagens por regras e apelidos configuráveis.
-- Bot: confirmar / corrigir / cancelar, pergunta a forma de pagamento quando falta, botões fixos (Resumos, Lançar, Desfazer último), menu de resumos (hoje, semana, mês, faturas, acerto do casal).
-- Segurança: responde só aos IDs cadastrados e ao grupo autorizado; segredos no `.env`; dados fora do Git.
-- Painel Streamlit: visão geral do mês, pendentes, faturas, acerto, lista e lançamento manual.
-- Backup manual (`python -m app.backup`).
-- 30 testes automáticos (`python -m pytest`).
+## Entregue
+- **05/11/2026:** banco SQLite com unidades de gestão, pessoas, contas, categorias, lançamentos e histórico; interpretador de frases; bot do Telegram; painel simples.
+- **10/11/2026:** aplicativo com três páginas (Visão geral, Lançamentos, Configurações); lançamento rápido por frase com conferência antes de salvar; edição e cancelamento de lançamentos; cadastros editáveis no aplicativo; backup e download do banco; instalação com dois cliques; bot passou a ser opcional. 36 testes automáticos.
 
 ## Diário
 | Data | O que aconteceu |
 | --- | --- |
-| 05/11/2026 | Código da Fase 1 criado e testado com dados simulados. Próximo: instalar, criar o bot e usar de verdade. |
+| 10/11/2026 | Tentativa de instalação: PowerShell em vez de cmd e Git ausente. Escopo reduzido para só o aplicativo local, com instalação por dois cliques e download por ZIP como alternativa ao Git. |
+| 05/11/2026 | Código da Fase 1 criado e testado com dados simulados. |
 
-## Ainda não faz (fases seguintes)
-- Leitura de foto de comprovante e áudio (Fase 6)
-- IA local para mensagens fora do padrão
-- Metas, investimentos e mercado (Fases 4 e 5)
-- Resumo semanal automático e backup agendado (Fase 5)
+## Fica para as próximas fases
+- Bot do Telegram (pronto no código, ligar quando fizer sentido)
 - Importação de extrato OFX/CSV
+- Metas, investimentos e mercado
+- Backup automático agendado

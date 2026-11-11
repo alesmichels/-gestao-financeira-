@@ -85,7 +85,7 @@ CAMPOS_EDITAVEIS = {"data", "tipo", "valor_centavos", "descricao", "categoria_id
 def conectar(caminho: Path | None = None) -> sqlite3.Connection:
     caminho = Path(caminho or config.DB_PATH)
     caminho.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(caminho)
+    con = sqlite3.connect(caminho, check_same_thread=False)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA foreign_keys = ON")
     con.executescript(ESQUEMA)
@@ -155,8 +155,9 @@ def unidade_padrao(con) -> int:
     return row["id"]
 
 
-def pessoas(con, unidade_id):
-    return con.execute("SELECT * FROM pessoas WHERE unidade_id = ? AND ativo = 1 ORDER BY id",
+def pessoas(con, unidade_id, incluir_inativos=False):
+    filtro = "" if incluir_inativos else " AND ativo = 1"
+    return con.execute(f"SELECT * FROM pessoas WHERE unidade_id = ?{filtro} ORDER BY id",
                        (unidade_id,)).fetchall()
 
 
@@ -165,13 +166,14 @@ def pessoa_por_telegram(con, telegram_id):
                        (telegram_id,)).fetchone()
 
 
-def contas(con, unidade_id):
-    return con.execute("SELECT * FROM contas WHERE unidade_id = ? AND ativo = 1 ORDER BY id",
+def contas(con, unidade_id, incluir_inativos=False):
+    filtro = "" if incluir_inativos else " AND ativo = 1"
+    return con.execute(f"SELECT * FROM contas WHERE unidade_id = ?{filtro} ORDER BY id",
                        (unidade_id,)).fetchall()
 
 
-def categorias(con, unidade_id, tipo=None):
-    sql = "SELECT * FROM categorias WHERE unidade_id = ? AND ativo = 1"
+def categorias(con, unidade_id, tipo=None, incluir_inativos=False):
+    sql = "SELECT * FROM categorias WHERE unidade_id = ?" + ("" if incluir_inativos else " AND ativo = 1")
     args = [unidade_id]
     if tipo:
         sql += " AND tipo = ?"
@@ -262,3 +264,84 @@ def ultimo_do_autor(con, autor_id):
     return con.execute(
         """SELECT * FROM lancamentos WHERE autor_id = ? AND status != 'cancelado'
            ORDER BY id DESC LIMIT 1""", (autor_id,)).fetchone()
+
+
+# ---------- edição de cadastros pelo aplicativo ----------
+
+def _texto_para_apelidos(texto) -> str:
+    if isinstance(texto, list):
+        lista = texto
+    else:
+        lista = [a.strip() for a in str(texto or "").split(",")]
+    return json.dumps([a for a in lista if a], ensure_ascii=False)
+
+
+def apelidos_para_texto(bruto) -> str:
+    return ", ".join(json.loads(bruto or "[]"))
+
+
+def _validar_nomes(linhas):
+    nomes = [str(l.get("nome") or "").strip() for l in linhas]
+    if any(not n for n in nomes):
+        raise ValueError("Toda linha precisa de um nome.")
+    repetidos = {n for n in nomes if nomes.count(n) > 1}
+    if repetidos:
+        raise ValueError(f"Nomes repetidos: {', '.join(sorted(repetidos))}")
+
+
+def salvar_pessoas(con, unidade_id, linhas: list[dict]):
+    """Cada linha: id (None = nova), nome, peso_divisao, telegram_id, ativo."""
+    _validar_nomes(linhas)
+    with transacao(con):
+        for l in linhas:
+            valores = (l["nome"].strip(), float(l.get("peso_divisao") or 0),
+                       int(l["telegram_id"]) if l.get("telegram_id") else None, int(bool(l.get("ativo", True))))
+            if l.get("id"):
+                con.execute("UPDATE pessoas SET nome = ?, peso_divisao = ?, telegram_id = ?, ativo = ? "
+                            "WHERE id = ? AND unidade_id = ?", (*valores, int(l["id"]), unidade_id))
+            else:
+                con.execute("INSERT INTO pessoas (nome, peso_divisao, telegram_id, ativo, unidade_id) "
+                            "VALUES (?, ?, ?, ?, ?)", (*valores, unidade_id))
+
+
+def salvar_contas(con, unidade_id, linhas: list[dict]):
+    """Cada linha: id, nome, tipo, titular (nome ou vazio), dia_fechamento, dia_vencimento, apelidos, ativo."""
+    _validar_nomes(linhas)
+    ids_pessoa = {p["nome"]: p["id"] for p in pessoas(con, unidade_id, incluir_inativos=True)}
+    with transacao(con):
+        for l in linhas:
+            if l.get("tipo") not in ("credito", "debito", "pix", "vale", "dinheiro"):
+                raise ValueError(f"Tipo inválido em '{l['nome']}'.")
+            dia_f = int(l["dia_fechamento"]) if l.get("dia_fechamento") else None
+            dia_v = int(l["dia_vencimento"]) if l.get("dia_vencimento") else None
+            for dia in (dia_f, dia_v):
+                if dia is not None and not 1 <= dia <= 31:
+                    raise ValueError(f"Dia inválido em '{l['nome']}': use 1 a 31.")
+            valores = (l["nome"].strip(), l["tipo"], ids_pessoa.get(l.get("titular") or ""), dia_f, dia_v,
+                       _texto_para_apelidos(l.get("apelidos")), int(bool(l.get("ativo", True))))
+            if l.get("id"):
+                con.execute("UPDATE contas SET nome = ?, tipo = ?, titular_id = ?, dia_fechamento = ?, "
+                            "dia_vencimento = ?, apelidos = ?, ativo = ? WHERE id = ? AND unidade_id = ?",
+                            (*valores, int(l["id"]), unidade_id))
+            else:
+                con.execute("INSERT INTO contas (nome, tipo, titular_id, dia_fechamento, dia_vencimento, apelidos, "
+                            "ativo, unidade_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (*valores, unidade_id))
+
+
+def salvar_categorias(con, unidade_id, linhas: list[dict]):
+    """Cada linha: id, nome, tipo, regra_divisao, apelidos, ativo."""
+    _validar_nomes(linhas)
+    with transacao(con):
+        for l in linhas:
+            if l.get("tipo") not in ("saida", "entrada"):
+                raise ValueError(f"Tipo inválido em '{l['nome']}'.")
+            if l.get("regra_divisao") not in ("proporcional", "50/50", "individual"):
+                raise ValueError(f"Divisão inválida em '{l['nome']}'.")
+            valores = (l["nome"].strip(), l["tipo"], l["regra_divisao"],
+                       _texto_para_apelidos(l.get("apelidos")), int(bool(l.get("ativo", True))))
+            if l.get("id"):
+                con.execute("UPDATE categorias SET nome = ?, tipo = ?, regra_divisao = ?, apelidos = ?, ativo = ? "
+                            "WHERE id = ? AND unidade_id = ?", (*valores, int(l["id"]), unidade_id))
+            else:
+                con.execute("INSERT INTO categorias (nome, tipo, regra_divisao, apelidos, ativo, unidade_id) "
+                            "VALUES (?, ?, ?, ?, ?, ?)", (*valores, unidade_id))
